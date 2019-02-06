@@ -2,7 +2,7 @@
 
 SBT ?= java -Xmx1G -Xss8M -XX:MaxPermSize=128M -jar sbt-launch.jar
 RTL_CONFIG := DefaultConfig
-C_SIM := ../emulator/emulator-rocketchip-$(RTL_CONFIG)
+C_SIM := ../emulator/emulator-freechips.rocketchip.system-$(RTL_CONFIG)
 R_SIM := ../vsim/simv-rocketchip-$(RTL_CONFIG)
 TEST := output/test.S
 OPTIONS := $(empty)
@@ -72,4 +72,3 @@ rnight:
 
 crnight:
 	$(SBT) 'overnight/run -c $(C_SIM) -r $(R_SIM) -g $(COMMIT) $(OPTIONS)'
-

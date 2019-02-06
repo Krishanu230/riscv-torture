@@ -148,12 +148,12 @@ object TestRunner extends App
       println("Virtual mode")
       val entropy = (new Random()).nextLong()
       println("entropy: " + entropy)
-      process = "riscv64-unknown-elf-gcc -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -Wa,-march=rv64imafd -DENTROPY=" + entropy + " -std=gnu99 -O2 -I./env/v -I./macros/scalar -T./env/v/link.ld ./env/v/entry.S ./env/v/vm.c " + asmFileName + " -lc -o " + binFileName
+      process = "riscv64-unknown-elf-gcc -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -Wa,-march=rv64imafdc -DENTROPY=" + entropy + " -std=gnu99 -O2 -I./env/v -I./macros/scalar -T./env/v/link.ld ./env/v/entry.S ./env/v/vm.c " + asmFileName + " -lc -o " + binFileName
     }
     else
     {
       println("Physical mode")
-      process = "riscv64-unknown-elf-gcc -nostdlib -nostartfiles -Wa,-march=rv64imafd -I./env/p -T./env/p/link.ld " + asmFileName + " -o " + binFileName
+      process = "riscv64-unknown-elf-gcc -nostdlib -nostartfiles -Wa,-march=rv64imafdc -I./env/p -T./env/p/link.ld " + asmFileName + " -o " + binFileName
     }
     val pb = Process(process)
     val exitCode = pb.!
@@ -214,7 +214,7 @@ object TestRunner extends App
     val outputArgs = if(output) Seq("+verbose") else Seq()
     val dumpArgs = if(dump && debug) Seq("-v"+bin+".vcd") else Seq()
     val debugArgs = if(debug) outputArgs ++ dumpArgs else Seq()
-    val simArgs = Seq("+max-cycles="+maxcycles) ++ debugArgs
+    val simArgs = Seq("+max-cycles="+maxcycles) ++ debugArgs 
     val simName = sim
     runSim(simName, simArgs, bin+".csim.sig", output, bin+".csim.out", Seq(), bin)
   }
@@ -340,4 +340,3 @@ object TestRunner extends App
   }
 
 }
-
