@@ -22,9 +22,10 @@ trait ScalarRegPool extends HWRegPool
   val regname: String
   val ldinst: String
   val stinst: String
-  
+
   def init_regs() =
   {
+    println("in init reg meathod\n");
     var s = name + "_init:\n"
     s += "\tla x31, " + name + "_init_data\n"
     for (i <- 0 to hwregs.length-1)
@@ -32,9 +33,10 @@ trait ScalarRegPool extends HWRegPool
     s += "\n"
     s
   }
-  
+
   def save_regs() =
   {
+      println("In HWREGPool.scala XregPool saveregS actual \n");
     var s = "\tla x1, " + name + "_output_data\n"
     for (i <- 0 to hwregs.length-1)
       if (hwregs(i).is_visible)
@@ -42,8 +44,8 @@ trait ScalarRegPool extends HWRegPool
     s += "\n"
     s
   }
-  
-  def init_regs_data() = 
+
+  def init_regs_data() =
   {
     var s = "\t.align 8\n"
     s += name + "_init_data:\n"
@@ -52,7 +54,7 @@ trait ScalarRegPool extends HWRegPool
     s += "\n"
     s
   }
-  
+
   def output_regs_data() =
   {
     var s = "\t.align 8\n"
@@ -86,14 +88,16 @@ trait PoolsMaster extends HWRegPool
 
 class XRegsPool extends ScalarRegPool
 {
+  println("In HWREGPool.scala XregPool \n");
   val (name, regname, ldinst, stinst) = ("xreg", "reg_x", "ld", "sd")
 
   hwregs += new HWReg("x0", true, false)
   for (i <- 1 to 31)
     hwregs += new HWReg("x" + i.toString(), true, true)
-    
+
   override def save_regs() =
   {
+      println("In HWREGPool.scala XregPool.savereg \n");
     hwregs(1).state = HID
     super.save_regs()
   }
@@ -116,20 +120,20 @@ class FRegsMaster extends ScalarRegPool with PoolsMaster
     d_reg_num -= mv_n
     s_reg_num += mv_n
   }
-  
+
   while(d_reg_num.length < 5)
   {
     val mv_n = rand_pick(s_reg_num)
     s_reg_num -= mv_n
     d_reg_num += mv_n
   }
-  
+
   val s_regpool = new FRegsPool(s_reg_num.toArray)
   val d_regpool = new FRegsPool(d_reg_num.toArray)
   val regpools = ArrayBuffer(s_regpool.asInstanceOf[HWRegPool],
                  d_regpool.asInstanceOf[HWRegPool])
   override val hwregs = regpools.map(_.hwregs).flatten
-  
+
   override def init_regs() = //Wrapper function
   {
     var s = "freg_init:\n"+"freg_s_init:\n"+"\tla x1, freg_init_data\n"
@@ -140,7 +144,7 @@ class FRegsMaster extends ScalarRegPool with PoolsMaster
       s += "\tfld" + " " + curreg + ", " + 8*i + "(x1)\n"
     s += "\n\n"
     s
-  } 
+  }
   override def save_regs() = //Wrapper function
   {
     var s = "freg_save:\n"+"\tla x1, freg_output_data\n"
@@ -170,36 +174,36 @@ class VRegsMaster(num_xregs: Int, num_pregs: Int, num_sregs: Int) extends PoolsM
   val x_reg_num = (0 to (num_xregs-1))
   val p_reg_num = (0 to (num_pregs-1))
   val s_reg_num = (0 to (num_sregs-1))
-  
+
   val x_regpool  = new VXRegsPool(x_reg_num.toArray)
   val p_regpool  = new VPRegsPool(p_reg_num.toArray)
   val s_regpool  = new VSRegsPool(s_reg_num.toArray)
   val a_regpool  = new VARegsPool()
-  val regpools = 
+  val regpools =
     ArrayBuffer(x_regpool.asInstanceOf[HWRegPool], p_regpool.asInstanceOf[HWRegPool],
-    s_regpool.asInstanceOf[HWRegPool], a_regpool.asInstanceOf[HWRegPool])  
+    s_regpool.asInstanceOf[HWRegPool], a_regpool.asInstanceOf[HWRegPool])
   override val hwregs = regpools.map(_.hwregs).flatten
 
   def init_regs() =
-  { 
+  {
     var s = "vreg_init:\n"
     s += s_regpool.init_regs()
     s
   }
   def save_regs() =
-  { 
+  {
     var s = "vreg_save:\n"
     s += s_regpool.save_regs()
     s
   }
   def init_regs_data() =
-  { 
+  {
     var s = "vreg_init_data:\n"
     s += s_regpool.init_regs_data()
     s
   }
   def output_regs_data() =
-  { 
+  {
     var s = "vreg_output_data:\n"
     s += s_regpool.output_regs_data()
     s
@@ -223,17 +227,17 @@ class VSRegsPool(reg_nums: Array[Int] = (0 to 255).toArray) extends HWRegPool
   hwregs += new HWReg("vs0", true, false)
   for (i <- reg_nums.drop(1))
     hwregs += new HWReg("vs" + i.toString(), true, true)
-  def init_regs() = 
+  def init_regs() =
   {
     var s = "vsreg_init:\n"+"\tla x1, vsreg_init_data\n"
-    for ((i, curreg) <- reg_nums.zip(hwregs)) 
+    for ((i, curreg) <- reg_nums.zip(hwregs))
     {
       s += "\tld" + " x2, " + 8*i + "(x1)\n"
       s += "\tvmcs"+ " " + curreg + ", x2\n"
     }
     s += "\n\n"
     s
-  } 
+  }
   def save_regs() =
   {
     hwregs(1).state = HID
@@ -245,7 +249,7 @@ class VSRegsPool(reg_nums: Array[Int] = (0 to 255).toArray) extends HWRegPool
     s += ".align 3\n"
     s += "vsreg_save_vf:\n"
     for (curreg <- hwregs.drop(2))
-      if (curreg.is_visible) 
+      if (curreg.is_visible)
       {
         s += "\tvssd vs1, " + curreg + "\n"
         s += "\tvaddi vs1, vs1, 8\n"
@@ -254,7 +258,7 @@ class VSRegsPool(reg_nums: Array[Int] = (0 to 255).toArray) extends HWRegPool
       s += "vsreg_save_end:\n\n"
     s
   }
-  def init_regs_data() = 
+  def init_regs_data() =
   {
     var s = "\t.align 8\n"
     s += "vsreg_init_data:\n"
@@ -263,7 +267,7 @@ class VSRegsPool(reg_nums: Array[Int] = (0 to 255).toArray) extends HWRegPool
     s += "\n"
     s
   }
-  
+
   def output_regs_data() =
   {
     var s = "\t.align 8\n"

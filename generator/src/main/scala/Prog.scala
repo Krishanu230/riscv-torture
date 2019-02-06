@@ -28,6 +28,8 @@ object ProgSeg
 class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
 {
   // Setup scalar core memory
+  println("====memsize: ",memsize)
+  val backup_mem = new Mem("backup_mem", 512)
   val core_memory = new Mem("test_memory", memsize)
 
   // Setup register pools
@@ -56,6 +58,7 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
 
   var killed_seqs = 0
   var nseqs = 0
+  println("[Data]killed seq: "+killed_seqs+"nseq:  "+nseqs+"");
   var prob_tbl = new ArrayBuffer[(Int, ()=>InstSeq)]
 
   val opstats = new HashMap[String, scala.collection.mutable.Map[String,Int]]
@@ -63,7 +66,7 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
   val seqstats = new HashMap[String,Int].withDefaultValue(0)
   val vseqstats = new HashMap[String,Int].withDefaultValue(0)
   val regstats = new HashMap[String,Int].withDefaultValue(0)
-  for (cat <- List(("alu"),("cmp"),("branch"),("jalr"),
+  for (cat <- List(("alu"),("cmp"),("branch"),("jalr"),("ecall"),
     ("jmp"),("la"),("mem"),("amo"),("misc"),("fpalu"),("fpcmp"),
     ("fpfma"),("fpmem"),("fpcvt"),("fpmisc"),("vmem"),("vamo"),("valu"),
     ("vmisc"),("vfpalu"),("vfpfma"),("vfpcvt"),("vsmem"),("vshared"),("vpred"),("vcmp"),("unknown")))
@@ -72,6 +75,7 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
       opstats(cat) = new HashMap[String,Int].withDefaultValue(0)
     }
   var instcnt = 0
+      println("[Data] instcnt: "+instcnt);
 
   def seqs_not_allocated = seqs.filter((x) => !x.allocated)
   def is_seqs_empty = seqs_not_allocated.length == 0
@@ -83,12 +87,14 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
   {
     for (seq <- seqs_not_allocated)
     {
+      println("---Finding active seq ses not allocated is "+seq.seqname)
       xregs.backup()
       fregs.backup()
       vregs.backup()
 
       if (seq.allocate_regs())
       {
+        println("-----[seqs_find_active] seq.allocated is true seq added to active seq is"+seq.seqname)
         seqs_active += seq
       }
       else
@@ -96,6 +102,7 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
         if (are_pools_fully_unallocated)
         {
           seqs -= seq
+          println("---**[seqs_find_active] seq killed")
           killed_seqs += 1
           seqstats(seq.seqname) -= 1
           if (seq.seqname == "vec")
@@ -106,15 +113,26 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
             }
           }
           if (killed_seqs < (nseqs*5))
-            gen_seq()
+          {
+                println("**********killed seqs < nseq*5 generating new seqs")
+                gen_seq()
+              }
         }
         xregs.restore()
         fregs.restore()
         vregs.restore()
 
+        println("\n\\\\\\\\                     [seqs_find_active] active seq is")
+        for(i<- 0 to ((seqs_active.length)-1)){println("\\\\\\\\                     "+seqs_active(i).seqname+" "+seqs_active(i).insts.length)};
+        println("\n")
+
         return
       }
     }
+
+    println("\n\\\\\\\\                     seqs_find_active] active seq is")
+    for(i<- 0 to ((seqs_active.length)-1)){println("\\\\\\\\                     "+seqs_active(i).seqname+" "+seqs_active(i).insts.length)};
+    println("\n")
   }
 
   var jalr_labels = new ArrayBuffer[Label]
@@ -157,7 +175,7 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
         return (reghash(regname1(0)) < reghash(regname2(0)))
       }
     }
-  
+
     val sortedRegs = regstats.toSeq.sortWith(register_lt) //TODO: Better way to sort?
     var s = "---------- Register Accesses ----------\n"
     for ((regname, cnt) <- sortedRegs)
@@ -167,16 +185,16 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
     s
   }
 
-  def sequence_stats(mix: Map[String, Int], vecmix: Map[String, Int], nseqs: Int, vnseq: Int, vfnum: Int): String = 
-  {  
+  def sequence_stats(mix: Map[String, Int], vecmix: Map[String, Int], nseqs: Int, vnseq: Int, vfnum: Int): String =
+  {
     def seq_lt(seq1: (String, Int), seq2: (String, Int)): Boolean =
     {
-      val seqhash = HashMap("xmem"->1,"xbranch"->2,"xalu"->3,"vmem"->4, 
+      val seqhash = HashMap("xmem"->1,"xbranch"->2,"xalu"->3,"vmem"->4,
       "fgen"->5,"fpmem"->6,"fax"->7,"fdiv"->8,"vec"->9,"vonly"->10,"valu"->11,"Generic"->12).withDefaultValue(100)
       if (seqhash(seq1._1) == 100 && seqhash(seq2._1) == 100) return (seq1._1 < seq2._1)
       return seqhash(seq1._1) < seqhash(seq2._1)
     }
-   
+
     val sortedMix = mix.toSeq.sortWith(seq_lt)
     val sortedVecmix = vecmix.toSeq.sortWith(seq_lt)
     var s = "----- Sequence Types Used:"
@@ -215,15 +233,15 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
     }
     s
   }
-  
-  def instruction_stats(): String = 
+
+  def instruction_stats(): String =
   {
     def cat_lt(cat1: (String, Int), cat2: (String, Int)): Boolean =
     {
       val cathash = HashMap("alu"->1,"cmp"->2,"branch"->3,"jmp"->4,"jalr"->5,
         "la"->6,"mem"->7,"amo"->8,"misc"->9,"fpalu"->10,"fpcmp"->11,"fpfma"->12,
         "fpmem"->13,"fpcvt"->14,"fpmisc"->15,"vmem"->16,"vamo"->17,"valu"->18,"vfpalu"->19,
-        "vfpfma"->20,"vfpcvt"->21,"vsmem"->22,"vshared"->23,"vpred"->24,"vcmp"->25,"vmisc"->26,"unknown"->27)
+        "vfpfma"->20,"vfpcvt"->21,"vsmem"->22,"vshared"->23,"vpred"->24,"vcmp"->25,"vmisc"->26,"unknown"->27,"ecall"->28)
       return cathash(cat1._1) < cathash(cat2._1)
     }
 
@@ -254,8 +272,13 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
 
   def gen_seq(): Unit =
   {
+    println("[genseq] Calling InstSEQ for next Seq ")
     val nxtseq = InstSeq(prob_tbl)
+      println("[genseq] nxtseq is "+nxtseq.seqname )
     seqs += nxtseq
+  //  println("insts length is "+nxtseq.insts.length)
+    println("[genseq] nextseq added to seqs Now the seqs is: ")
+    for(i<- 0 to ((seqs.length)-1)){println(" "+seqs(i).seqname+" "+seqs(i).insts.length)};
     seqstats(nxtseq.seqname) += 1
     if (nxtseq.seqname == "vec")
     {
@@ -268,6 +291,7 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
 
   def add_inst(inst: Inst) =
   {
+    println("In add_inst");
     if (progsegs.length == 0)
       progsegs += ProgSeg()
 
@@ -314,11 +338,12 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
     }
   }
 
-  def names = List("xmem","xbranch","xalu","fgen","fpmem","fax","fdiv","vec")
+  def names = List("xmem","xbranch","xalu","fgen","fpmem","fax","fdiv","vec","xecall")
 
   def code_body(seqnum: Int, mix: Map[String, Int], veccfg: Map[String, String], use_amo: Boolean, use_mul: Boolean, use_div: Boolean, segment: Boolean) =
   {
     val name_to_seq = Map(
+      "xecall" -> (() => new SeqEcall(xregs)),
       "xmem" -> (() => new SeqMem(xregs, core_memory, use_amo)),
       "xbranch" -> (() => new SeqBranch(xregs)),
       "xalu" -> (() => new SeqALU(xregs, use_mul, use_div)), //true means use_divider, TODO: make better
@@ -331,21 +356,44 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
     prob_tbl = new ArrayBuffer[(Int, () => InstSeq)]
     nseqs = seqnum
 
-    for ((name, prob) <- mix)
-      prob_tbl += ((prob, name_to_seq(name)))
+    println("\n[code_body]----------fillin prob table-------")
+    for ((name, prob) <- mix){
 
+      prob_tbl += ((prob, name_to_seq(name)));
+println(prob+" "+name)
+    }
+
+    println("[code_body]----------------------callin genseq-------------------------");
     for (i <- 0 to nseqs-1) gen_seq()
 
-    if (segment) { progsegs += ProgSeg() }
+
+
+   println("\n[code_body]data :- segment : "+segment+"");
+    if (segment) { println("--adding progseg--"); progsegs += ProgSeg() }
+
     while (!is_seqs_empty)
     {
+      println("\n------++++ontop++++-----------------------------------------------------------")
       seqs_find_active()
+
+    //  println("\\\\\\\\                     active seq is")
+//        for(i<- 0 to ((seqs_active.length)-1)){println("\\\\\\\\                     "+seqs_active(i).seqname+" "+seqs_active(i).insts.length)};
+      println("\n[code_body]----Entering while actie_seqs is not empty")
 
       while (!is_seqs_active_empty)
       {
+        println("#########is_seqs_active_empty = "+is_seqs_active_empty)
+        println("[code_body]picking rand seq from active seq")
+
         val seq = rand_pick(seqs_active)
+
+        println(" ranomly picked seq from active seqs is "+ seq.seqname)
 	if(segment) {
 	  val inst = seq.next_inst()
+    println("   [code_body]inst is : "+inst.toString)
+
+
+    println("    filtering ");
 	  val branch_filter = (x: Operand) =>
       	    x.isInstanceOf[Label] && x.asInstanceOf[Label].label.indexOf("branch_patch") != -1
     	  val branch_patch = inst.operands.indexWhere(branch_filter)
@@ -359,29 +407,36 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
     	    progsegs.last.insts += inst
 	    update_stats(inst)
 	  }
-	} else {	
+	} else {
+          println("Should never be here");
           add_inst(seq.next_inst())
 	}
-
+      //  println("Checking if seq is done" + seq.is_done)
         if (seq.is_done)
         {
+
           seq.free_regs()
+         println("done seq is"+seq.seqname)
           seqs_active -= seq
-          if (seq.isInstanceOf[SeqVec]) 
+          println("[prev seq removed active seq now is")
+            for(i<- 0 to ((seqs_active.length)-1)){println(" "+seqs_active(i).seqname+" "+seqs_active(i).insts.length)};
+          if (seq.isInstanceOf[SeqVec])
             for (vinst <- seq.asInstanceOf[SeqVec].vinsts)
               update_stats(vinst)
         }
 
-        if (rand_range(0,99) < 10) seqs_find_active()
+        if (rand_range(0,99) < 10){println("*******randomly finding active seq again****************************************************");seqs_find_active()}
       }
+          println("out while 2\n");
     }
-    
+
     //Final p_seg
+      println("in final pseg\n");
     progsegs.last.insts += J(Label("reg_dump"))
 
     if(!segment) { resolve_jalr_las }
     rand_permute(progsegs)
- 
+
     if (killed_seqs >= (nseqs*5))
     {
     println("Warning: Prog killed an excessive number of sequences. (#X=%d, #Fs=%d, #Fd=%d, #VX=%d, #VP=%d, #VS=%d, #VA=%d)" format (xregs.size, fregs_s.size, fregs_d.size, vxregs.size, vpregs.size, vsregs.size, varegs.size))
@@ -406,7 +461,7 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
      else if (using_fpu) "RVTEST_RV64UF\n"
      else "RVTEST_RV64U\n") +
     "RVTEST_CODE_BEGIN\n" +
-    (if (using_vec) init_vector() else "") + 
+    (if (using_vec) init_vector() else "") +
     "\n" +
     "\tj test_start\n" +
     "\n" +
@@ -423,7 +478,7 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
     "\n"
   }
 
-  def init_vector() = 
+  def init_vector() =
   {
     "\n" +
     "\tli x1, " + used_vl + "\n" +
@@ -478,6 +533,7 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
     var s = "// Memory Blocks\n"
     s += MemDump(core_memory)
     s += "\n"
+
     s += ".align 8\n"
     s += "loop_count: .word 0x" + Integer.toHexString(loop_size) + "\n\n"
     for(seq <- seqs.filter(_.is_done))
@@ -535,7 +591,7 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
   def statistics(nseqs: Int, fprnd: Int, mix: Map[String, Int], vnseq: Int, vmemsize: Int, vfnum: Int, vecmix: Map[String, Int],
                  use_amo: Boolean, use_mul: Boolean, use_div: Boolean) =
   {
-    "--------------------------------------------------------------------------\n" + 
+    "--------------------------------------------------------------------------\n" +
     "-- Statistics for assembly code created by RISCV torture test generator --\n" +
     get_time() +
     "--------------------------------------------------------------------------\n" +
@@ -548,7 +604,7 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
     "---------- fprnd = " + fprnd + " ----------\n" +
     "---------- use_amo = " + use_amo + " ----------\n" +
     "---------- use_mul = " + use_mul + " ----------\n" +
-    "---------- use_div = " + use_div + " ----------\n" + 
+    "---------- use_div = " + use_div + " ----------\n" +
     "--------------------------------------------------------------------------\n\n" +
     "--------------------------------------------------------------------------\n" +
     sequence_stats(mix, vecmix, nseqs, vnseq, vfnum) +

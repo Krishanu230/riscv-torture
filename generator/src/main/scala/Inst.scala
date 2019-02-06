@@ -30,6 +30,7 @@ class Inst(opcode: String, val operands: Array[Operand])
     if (is_vmem) return "vmem"
     if (is_vamo) return "vamo"
     if (is_vmisc) return "vmisc"
+    if (is_ecall) return "ecall"
     return "unknown" //Shouldn't return this.
   }
 
@@ -118,6 +119,8 @@ class Inst(opcode: String, val operands: Array[Operand])
 
   def is_vmisc = List("vsetcfg", "vstop", "vsetvl", "veidx", "vf",
     "vmcs", "vmca", "fence").contains(opcode)
+
+def is_ecall = List("ecall").contains(opcode)
 
   override def toString =
   {
@@ -533,3 +536,4 @@ object FMOVN extends Opcode("fmovn")
 object FENCE_V extends Opcode("fence")
 
 object ILLEGAL extends Opcode(".word")
+object ECALL extends Opcode("ecall")

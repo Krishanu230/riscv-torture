@@ -10,6 +10,7 @@ class SeqALU(xregs: HWRegPool, use_mul: Boolean, use_div: Boolean) extends InstS
   {
     val dest = reg_write_visible(xregs)
     val imm = Imm(immfn())
+    println("--here adding to inst")
     insts += op(dest, imm)
   }
 
@@ -17,6 +18,7 @@ class SeqALU(xregs: HWRegPool, use_mul: Boolean, use_div: Boolean) extends InstS
   {
     val src1 = reg_read_any(xregs)
     val dest = reg_write(xregs, src1)
+    println("--here adding to inst")
     insts += op(dest, src1, src1)
   }
 
@@ -25,6 +27,7 @@ class SeqALU(xregs: HWRegPool, use_mul: Boolean, use_div: Boolean) extends InstS
     val src1 = reg_read_any(xregs)
     val dest = reg_write(xregs, src1)
     val imm = Imm(immfn())
+    println("--here adding to inst")
     insts += op(dest, src1, imm)
   }
 
@@ -33,7 +36,9 @@ class SeqALU(xregs: HWRegPool, use_mul: Boolean, use_div: Boolean) extends InstS
     val src1 = reg_read_any(xregs)
     val dest = reg_write(xregs, src1)
     val tmp = reg_write_visible(xregs)
+    println("--here adding 2 to inst")
     insts += ADDI(tmp, reg_read_zero(xregs), Imm(rand_imm()))
+
     insts += op(dest, tmp, tmp)
   }
 
@@ -42,6 +47,7 @@ class SeqALU(xregs: HWRegPool, use_mul: Boolean, use_div: Boolean) extends InstS
     val src1 = reg_read_any(xregs)
     val src2 = reg_read_any(xregs)
     val dest = reg_write(xregs, src1, src2)
+    println("--here adding to inst")
     insts += op(dest, src1, src2)
   }
 
@@ -51,13 +57,14 @@ class SeqALU(xregs: HWRegPool, use_mul: Boolean, use_div: Boolean) extends InstS
     val dest = reg_write(xregs, src1)
     val tmp1 = reg_write_visible(xregs)
     val tmp2 = reg_write_visible(xregs)
+    println("--here adding 3 to inst")
     insts += ADDI(tmp1, reg_read_zero(xregs), Imm(rand_imm()))
     insts += ADDI(tmp2, reg_read_zero(xregs), Imm(rand_imm()))
     insts += op(dest, tmp1, tmp2)
   }
-
+println("candidates init")
   val candidates = new ArrayBuffer[() => insts.type]
-
+println("adding to cannd")
   candidates += seq_immfn(LUI, rand_bigimm)
   candidates += seq_src1_immfn(ADDI, rand_imm)
   candidates += seq_src1_immfn(SLLI, rand_shamt)
@@ -87,6 +94,6 @@ class SeqALU(xregs: HWRegPool, use_mul: Boolean, use_div: Boolean) extends InstS
     candidates += seq_src2(op)
     candidates += seq_src2_zero(op)
   }
-
+println("randomly picing cand")
   rand_pick(candidates)()
 }

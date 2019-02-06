@@ -5,14 +5,18 @@ import Rand._
 
 class SeqMem(xregs: HWRegPool, mem: Mem, use_amo: Boolean) extends InstSeq
 {
+  println("\n/////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\n")
   override val seqname = "xmem"
   def seq_load_addrfn(op: Opcode, addrfn: (Int) => Int) = () =>
   {
     val reg_addr = reg_write_hidden(xregs)
     val reg_dest = reg_write_visible(xregs)
     val addr = addrfn(mem.size)
-    val imm = rand_imm()
 
+    val imm = rand_imm()
+    val temp = addr-imm
+      println("*****addrfn(mem.size is)"+addr+" imm is "+imm )
+    println("*****addrfn(mem.size is ) - imm is "+ temp)
     insts += LA(reg_addr, BaseImm(mem.toString, addr-imm))
     insts += op(reg_dest, RegImm(reg_addr, imm))
   }
@@ -23,7 +27,9 @@ class SeqMem(xregs: HWRegPool, mem: Mem, use_amo: Boolean) extends InstSeq
     val reg_src = reg_read_visible(xregs)
     val addr = addrfn(mem.size)
     val imm = rand_imm()
-
+println("*****addrfn(mem.size is)"+addr+" imm is "+imm )
+val temp = addr-imm
+println("*****addrfn(mem.size is ) - imm is "+ temp)
     insts += LA(reg_addr, BaseImm(mem.toString, addr-imm))
     insts += op(reg_src, RegImm(reg_addr, imm))
   }
@@ -84,8 +90,9 @@ class SeqMem(xregs: HWRegPool, mem: Mem, use_amo: Boolean) extends InstSeq
 
     val (lop, l_addr) = AccessType.getRandOpAndAddr(dw_addr, is_store=false)
     val (sop, s_addr) = AccessType.getRandOpAndAddr(dw_addr, is_store=true)
-    //println("dwaddr: " + dw_addr + ",sop: " + sop.name  + ",lop: " + lop.name + " saddr: " + s_addr + ", laddr: " + l_addr)
-
+    println("dwaddr: " + dw_addr + ",sop: " + sop.name  + ",lop: " + lop.name + " saddr: " + s_addr + ", laddr: " + l_addr)
+    val temp = l_addr-l_imm
+    println("*****adding stld overlap "+ temp)
     insts += LA(l_reg_addr, BaseImm(mem.toString, l_addr-l_imm))
     insts += LA(s_reg_addr, BaseImm(mem.toString, s_addr-s_imm))
     if (math.random < 0.5)
@@ -118,7 +125,7 @@ class SeqMem(xregs: HWRegPool, mem: Mem, use_amo: Boolean) extends InstSeq
   candidates += seq_store_addrfn(SW, rand_addr_w)
   candidates += seq_store_addrfn(SD, rand_addr_d)
 
-  if (use_amo) 
+  if (use_amo)
   {
     candidates += seq_amo_addrfn(AMOADD_W, rand_addr_w)
     candidates += seq_amo_addrfn(AMOSWAP_W, rand_addr_w)

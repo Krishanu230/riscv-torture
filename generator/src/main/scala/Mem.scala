@@ -5,14 +5,16 @@ import Rand._
 
 class Mem(name: Array[Operand], val size: Int) extends Operand
 {
+  //  println("Making memory in MEM.scala \n");
   def this(namelabel: String, size: Int) = this(Array[Operand](Label(namelabel)), size)
 
   assert(size % 4 == 0, "Memory size must be multiple of 4")
 
   override def toString = name.mkString("")
 
-  def dumpdata = 
+  def dumpdata =
   {
+      println("Dumping Mem : Data memory  \n");
     var s = "\t.align 8\n"
     s += this.toString + ":\n"
     if(size % 16 == 0)
@@ -60,7 +62,7 @@ class VMem(name: Array[Operand], val ut_size: Int, num_ut: Int) extends Mem(name
 
   assert(size % 16 == 0, "Per uthread memory size must be multiple of 16")
 
-  override def dumpdata = 
+  override def dumpdata =
   {
     var s = "\t.align 8\n"
     s += this.toString + ":\n"
@@ -74,4 +76,3 @@ class VMem(name: Array[Operand], val ut_size: Int, num_ut: Int) extends Mem(name
     s
   }
 }
-

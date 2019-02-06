@@ -12,11 +12,12 @@ class InstSeq extends HWRegAllocator
   val extra_code = new ArrayBuffer[DataChunk]
   val extra_hidden_data = new ArrayBuffer[DataChunk]
   val extra_visible_data = new ArrayBuffer[DataChunk]
-  
+
   def is_done = insts.length == inst_ptr
 
   def next_inst() =
   {
+
     val inst = insts(inst_ptr)
     inst_ptr += 1
     inst
@@ -28,10 +29,14 @@ object InstSeq
   def apply(prob_tbl: ArrayBuffer[(Int, () => InstSeq)]): InstSeq =
   {
     var p = rand_range(0, 99)
+    //println("p is "+p)
     for ((prob, gen_seq) <- prob_tbl)
     {
-      if (p < prob) return gen_seq()
+    //  println("prob "+prob+" and gen_seq is "+gen_seq().seqname)
+      if (p < prob) { return gen_seq()}
+
       p -= prob
+    //  println("p now is "+p)
     }
 
     assert(false, println("Probabilties should have added up to 100%"))
@@ -54,6 +59,8 @@ class HWRegAllocator
     reg
   }
 
+  def reg_read_t6(hwrp: HWRegPool) = {reg_fn(hwrp, filter_read_t6, alloc_read, free_read)}
+  def reg_read_t5(hwrp: HWRegPool) = {reg_fn(hwrp, filter_read_t5, alloc_read, free_read)}
   def reg_read_zero(hwrp: HWRegPool) = { reg_fn(hwrp, filter_read_zero, alloc_read, free_read) }
   def reg_read_any(hwrp: HWRegPool) = { reg_fn(hwrp, filter_read_any, alloc_read, free_read) }
   def reg_read_any_other(hwrp: HWRegPool, other: Reg) = { reg_fn(hwrp, filter_read_any_other(other), alloc_read, free_read) }
@@ -68,6 +75,7 @@ class HWRegAllocator
 
   def allocate_regs(): Boolean =
   {
+    println("in allocate reg")
     for (reg <- regs)
     {
       val regna = reg.asInstanceOf[RegNeedsAlloc]
@@ -75,8 +83,11 @@ class HWRegAllocator
       val consec_regs = regna.consec_regs
       val hwregs = regna.hwrp.hwregs
 
-      if (candidates.length < consec_regs)
-        return false
+      if (candidates.length < consec_regs){
+            println("*****returning false cannot allocate register")
+            return false
+      }
+
 
       var high = 0
       val consec_candidates = new ArrayBuffer[Int] // index in hwregs
@@ -112,6 +123,7 @@ class HWRegAllocator
   {
     for (reg <- regs)
     {
+      println("[In inst seq]Register arr freed is ")
       val regna = reg.asInstanceOf[RegNeedsAlloc]
       val hwregs = regna.hwrp.hwregs
       val start = hwregs.indexOf(regna.hwreg)
