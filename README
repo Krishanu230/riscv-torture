@@ -1,3 +1,18 @@
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ Temp Notes [added by Krishanu Singh]
+Files to check out:
+1.riscv_test.h
+  (code for setting up the environment and handling traps)
+2.riscv-torture/generator/src/main/scala/seqEcall.scala 
+  (code for adding a ecall sequence)
+3.riscv-torture/generator/src/main/scala/prog.scala
+  (code for main generator porgram)
+
+
+
+ 
+ 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ===========================================================================
 RISC-V Torture Test Generator
 ===========================================================================
