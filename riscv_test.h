@@ -186,6 +186,7 @@ handle_exception:                                                       \
         j stan_ecall;                                                   \
     stan_ecall:                                                         \
         /* execute any code here in machine mode.*/                     \
+        /* TODO: make the generator dump some random intructions here*/ \
         csrr t6, mepc;                                                  \
         addi t6, t6, 4;                                                 \
         csrw mepc, t6;                                                  \
