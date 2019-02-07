@@ -1,3 +1,9 @@
+//there are two main arrays : seqs and active seqs.
+//first, the config is loaded and seqs buffer is filled with the sequences generated acc to the config
+//then active seqs is filled with max possible seqs from seqs array such that no register clashes happen.
+//the instructions from the sequences of active seqs buffer are then jumbled up in the final output string.
+//loops until all the seqs from seqs buffer are allocated.
+
 package torture
 
 import scala.collection.mutable.ArrayBuffer
