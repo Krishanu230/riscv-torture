@@ -3,7 +3,6 @@ import Rand._
 
 class SeqEcall(xregs: HWRegPool) extends InstSeq
 {
-  // store the reg dum addr in ra and the store 1 at the start to distinguish bw ecalls
   override val seqname = "ecall"
   val tmp1 = reg_write_visible(xregs)
   insts += ADDI(tmp1, reg_read_zero(xregs), Imm(1))

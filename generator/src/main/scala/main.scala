@@ -10,6 +10,8 @@ import scala.collection.JavaConversions._
 case class Options(var outFileName: String = "test",
   var confFileName: String = "config/default.config")
 
+object Config2 extends Config_obj
+
 object Generator extends App
 {
   override def main(args: Array[String]) =
@@ -26,8 +28,10 @@ object Generator extends App
     }
   }
 
-  def generate(confFile: String, outFileName: String): String = {
-    println("\n-------------------[in main.generate]----------------------------------------------------------------------------------\n");
+def generate(confFile: String, outFileName: String): String = {
+
+    println("\n-------------------[in main.generate]------------------------------------------------------------------------------------\n");
+
     val config = new Properties()
 
     val in = new FileInputStream(confFile)
@@ -45,14 +49,21 @@ object Generator extends App
     val segment = (config.getProperty("torture.generator.segment", "true").toLowerCase == "true")
     val loop    = (config.getProperty("torture.generator.loop", "true").toLowerCase == "true")
     val loop_size = config.getProperty("torture.generator.loop_size", "256").toInt
+
+    Config2;
     println("calling generate..\n");
-    generate(nseqs, memsize, fprnd, mix, vec, use_amo, use_mul, use_div, outFileName, segment, loop, loop_size)
+    generate(nseqs, memsize, fprnd, mix, vec, use_amo, use_mul, use_div, outFileName, segment, loop, loop_size, Config2)
   }
 
-  def generate(nseqs: Int, memsize: Int, fprnd : Int, mix: Map[String,Int], veccfg: Map[String,String], use_amo: Boolean, use_mul: Boolean, use_div: Boolean, outFileName: String, segment : Boolean, loop : Boolean, loop_size : Int): String = {
+  def generate(nseqs: Int, memsize: Int, fprnd : Int, mix: Map[String,Int], veccfg: Map[String,String], use_amo: Boolean, use_mul: Boolean, use_div: Boolean, outFileName: String, segment : Boolean, loop : Boolean, loop_size : Int, Config_ecall : Config2.type): String = {
     println("in main.generate_overloaded\n");
+
     assert (mix.values.sum == 100, println("The instruction mix specified in config does not add up to 100%"))
     assert (mix.keys.forall(List("xmem","xbranch","xalu","fgen","fpmem","fax","fdiv","vec","xecall") contains _), println("The instruction mix specified in config contains an unknown sequence type name"))
+
+    assert (Config_ecall.mix.values.sum == 100, println("The instruction mix specified in config does not add up to 100%"))
+    assert (Config_ecall.mix.keys.forall(List("xmem","xbranch","xalu","fgen","fpmem","fax","fdiv","vec","xecall") contains _), println("The instruction mix specified in config contains an unknown sequence type name"))
+
 
     val vmemsize = veccfg.getOrElse("memsize", "32").toInt
     val vnseq = veccfg.getOrElse("seq", "100").toInt
@@ -67,8 +78,8 @@ object Generator extends App
     SeqVec.cnt = 0
     println(s"progset.cnt= "+ProgSeg.cnt+" "+"SeqVec.cnt= " + SeqVec.cnt+ " \n");
     println("calling prog.generate\n");
-    val s = prog.generate(nseqs, fprnd, mix, veccfg, use_amo, use_mul, use_div, segment, loop, loop_size)
-    println("writing to files\n");
+   val s = prog.generate(nseqs, fprnd, mix, veccfg, use_amo, use_mul, use_div, segment, loop, loop_size, Config2)
+   println("writing to files\n");
     val oname = "output/" + outFileName + ".S"
     val fw = new FileWriter(oname)
     fw.write(s)
@@ -79,5 +90,6 @@ object Generator extends App
     fw2.write(stats)
     fw2.close()
     oname
+
   }
 }
