@@ -116,13 +116,10 @@ _start:                                                                 \
         j reset_vector;                                                 \
         .align 2;                                                       \
 trap_vector:                                                            \
-        /* storing the address of memory allocated for dumping the */   \
-        /* register state at the end of the test in ra */               \
+        /* test whether the test came from pass/fail */                 \
         la ra, xreg_output_data;                                        \
-        /* saving t5 and t6 */                                          \
         sd t5, 8(ra);                                                   \
         sd t6, 16(ra);                                                  \
-        /* if its a user ecall go to check 1   */                       \
         csrr t5, mcause;                                                \
         li t6, CAUSE_USER_ECALL;                                        \
         beq t5, t6, check_1;                                            \
@@ -141,9 +138,6 @@ trap_vector:                                                            \
 handle_exception:                                                       \
         /* we don't know how to handle whatever the exception was */    \
   check_1:                                                              \
-        /* if it was an intentional ecall we'd expect 1 at the*/        \
-        /* start of the reg state dump memory */                        \
-        /* if the call was intentional go on to save reg  */            \
         ld t6, 0(ra);                                                   \
         bnez t6, save_reg;                                              \
         j write_tohost;                                                 \
@@ -154,7 +148,6 @@ handle_exception:                                                       \
         sw TESTNUM, tohost, t5;                                         \
         j write_tohost;                                                 \
   save_reg :                                                            \
-        /* save the rest of registers */                                \
         sd gp, 24(ra);                                                  \
         sd tp, 32(ra);                                                  \
         sd t0, 40(ra);                                                  \
@@ -185,14 +178,12 @@ handle_exception:                                                       \
         sd sp, 240(ra);                                                 \
         j stan_ecall;                                                   \
     stan_ecall:                                                         \
-        /* execute any code here in machine mode.*/                     \
-        /* TODO: make the generator dump some random intructions here*/ \
         csrr t6, mepc;                                                  \
         addi t6, t6, 4;                                                 \
         csrw mepc, t6;                                                  \
-        j load_reg;                                                     \
+        j pseg_1;                                                       \
+    .align 8;                                                           \
     load_reg:                                                           \
-        /* load the saved register state and return via mret */         \
         ld gp, 24(ra);                                                  \
         ld tp, 32(ra);                                                  \
         ld t0, 40(ra);                                                  \
@@ -264,7 +255,7 @@ reset_vector:                                                           \
         unimp
 
 //-----------------------------------------------------------------------
-// Pass/Fail Macro (stored 0 at the start of reg dump mem to distinguish the ecalls)
+// Pass/Fail Macro
 //-----------------------------------------------------------------------
 
 #define RVTEST_PASS                                                     \
@@ -277,6 +268,8 @@ reset_vector:                                                           \
 
 #define TESTNUM gp
 #define RVTEST_FAIL                                                     \
+        nop;                                                            \
+        nop;                                                            \
         fence;                                                          \
 1:      beqz TESTNUM, 1b;                                               \
         sll TESTNUM, TESTNUM, 1;                                        \
