@@ -81,13 +81,14 @@ object TestRunner extends App
       case None => {
         val gen = generator.Generator
         val newAsmName = gen.generate(confFileName, "test")
+        println("new asm name : "+ newAsmName)
         compileAsmToBin(newAsmName)
       }
     }
 
     // Add the simulators that should be tested
     val simulators = new ArrayBuffer[(String, (String, Boolean, Boolean, Boolean) => String)]
-    simulators += (("spike",runIsaSim _ ))
+    simulators += (("kspike",runIsaSim _ ))
     cSimPath match {
       case Some(p) => simulators += (("csim",runCSim(p) _ ))
       case None =>
@@ -140,6 +141,7 @@ object TestRunner extends App
   }
 
   def compileAsmToBin(asmFileName: String): Option[String] = {
+    println("asmfilename "+asmFileName)
     assert(asmFileName.endsWith(".S"), println("Filename does not end in .S"))
     val binFileName = asmFileName.dropRight(2)
     var process = ""
@@ -214,7 +216,7 @@ object TestRunner extends App
     val outputArgs = if(output) Seq("+verbose") else Seq()
     val dumpArgs = if(dump && debug) Seq("-v"+bin+".vcd") else Seq()
     val debugArgs = if(debug) outputArgs ++ dumpArgs else Seq()
-    val simArgs = Seq("+max-cycles="+maxcycles) ++ debugArgs 
+    val simArgs = Seq("+max-cycles="+maxcycles) ++ debugArgs
     val simName = sim
     runSim(simName, simArgs, bin+".csim.sig", output, bin+".csim.out", Seq(), bin)
   }
@@ -231,7 +233,7 @@ object TestRunner extends App
   def runIsaSim(bin: String, debug: Boolean, output: Boolean, dump: Boolean): String = {
     val debugArgs = if(debug && output) Seq("-d") else Seq()
     val simArgs = if (hwacha) Seq("--extension=hwacha") else Seq()
-    runSim("spike", simArgs ++ debugArgs, bin+".spike.sig", output, bin+".spike.out", Seq(), bin)
+    runSim("kspike", simArgs ++ debugArgs, bin+".spike.sig", output, bin+".spike.out", Seq(), bin)
   }
 
   def runSimulators(bin: String, simulators: Seq[(String, (String, Boolean, Boolean, Boolean) => String)], debug: Boolean, output: Boolean, dumpWaveform: Boolean): Seq[(String, (String, (String, Boolean, Boolean, Boolean) => String), Result)] = {
