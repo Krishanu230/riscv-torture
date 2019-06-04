@@ -3,9 +3,11 @@ package torture
 import scala.collection.mutable.ArrayBuffer
 import Rand._
 
-class SeqALU(xregs: HWRegPool, use_mul: Boolean, use_div: Boolean) extends InstSeq //TODO: better configuration
+class SeqALU(xregs: HWRegPool, use_mul: Boolean, use_div: Boolean, use_priv: Boolean ) extends InstSeq //TODO: better configuration
 {
+
   override val seqname = "xalu"
+  val do_not_use = reg_write_s0(xregs)
   def seq_immfn(op: Opcode, immfn: () => Int) = () =>
   {
     val dest = reg_write_visible(xregs)
@@ -62,9 +64,9 @@ class SeqALU(xregs: HWRegPool, use_mul: Boolean, use_div: Boolean) extends InstS
     insts += ADDI(tmp2, reg_read_zero(xregs), Imm(rand_imm()))
     insts += op(dest, tmp1, tmp2)
   }
-println("candidates init")
+  println("candidates init")
   val candidates = new ArrayBuffer[() => insts.type]
-println("adding to cannd")
+  println("adding to cannd")
   candidates += seq_immfn(LUI, rand_bigimm)
   candidates += seq_src1_immfn(ADDI, rand_imm)
   candidates += seq_src1_immfn(SLLI, rand_shamt)
@@ -94,6 +96,6 @@ println("adding to cannd")
     candidates += seq_src2(op)
     candidates += seq_src2_zero(op)
   }
-println("randomly picing cand")
+  println("randomly picing cand")
   rand_pick(candidates)()
 }

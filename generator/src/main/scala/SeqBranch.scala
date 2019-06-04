@@ -3,9 +3,10 @@ package torture
 import scala.collection.mutable.ArrayBuffer
 import Rand._
 
-class SeqBranch(xregs: HWRegPool) extends InstSeq
+class SeqBranch(xregs: HWRegPool, use_priv: Boolean) extends InstSeq
 {
   override val seqname = "xbranch"
+  val do_not_use = reg_write_s0(xregs)
   val taken = Label("__needs_branch_patch")
   val nottakens = ArrayBuffer[Label](Label("crash_backward"), Label("crash_forward"))
   val nottaken = rand_pick(nottakens)
@@ -130,7 +131,7 @@ class SeqBranch(xregs: HWRegPool) extends InstSeq
   def get_two_regs_and_branch_with_label( op: Opcode, helper: () => (Operand, Operand), label: Label, flip_ops:Boolean = false) = () =>
   {
     val regs = helper()
-    if(!flip_ops) insts += op(regs._1, regs._2, label) else insts += op(regs._2, regs._1, label) 
+    if(!flip_ops) insts += op(regs._1, regs._2, label) else insts += op(regs._2, regs._1, label)
   }
 
   // These tests have the same labels if the operand order is reversed

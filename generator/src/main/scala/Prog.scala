@@ -277,7 +277,7 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
     val nxtseq = InstSeq(prob_tbl)
       println("[genseq] nxtseq is "+nxtseq.seqname )
     seqs += nxtseq
-  //  println("insts length is "+nxtseq.insts.length)
+    //  println("insts length is "+nxtseq.insts.length)
     println("[genseq] nextseq added to seqs Now the seqs is: ")
     for(i<- 0 to ((seqs.length)-1)){println(" "+seqs(i).seqname+" "+seqs(i).insts.length)};
     seqstats(nxtseq.seqname) += 1
@@ -346,9 +346,9 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
     progsegs.clear()
     val name_to_seq = Map(
       "xecall" -> (() => new SeqEcall(xregs)),
-      "xmem" -> (() => new SeqMem(xregs, core_memory, use_amo)),
-      "xbranch" -> (() => new SeqBranch(xregs)),
-      "xalu" -> (() => new SeqALU(xregs, use_mul, use_div)), //true means use_divider, TODO: make better
+      "xmem" -> (() => new SeqMem(xregs, core_memory, use_amo, use_priv)),
+      "xbranch" -> (() => new SeqBranch(xregs, use_priv)),
+      "xalu" -> (() => new SeqALU(xregs, use_mul, use_div, use_priv)), //true means use_divider, TODO: make better
       "fgen" -> (() => new SeqFPU(fregs_s, fregs_d)),
       "fpmem" -> (() => new SeqFPMem(xregs, fregs_s, fregs_d, core_memory)),
       "fax" -> (() => new SeqFaX(xregs, fregs_s, fregs_d)),
@@ -438,7 +438,8 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
     if(use_priv == false){
      progsegs.last.insts += J(Label("reg_dump"))}
     else{
-     progsegs.last.insts += J(Label("load_reg"))}
+     progsegs.last.insts += J(Label("finish_ecall"))
+   }
 
     if(!segment) { resolve_jalr_las }
     rand_permute(progsegs)
@@ -469,6 +470,7 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
     "RVTEST_CODE_BEGIN\n" +
     (if (using_vec) init_vector() else "") +
     "\n" +
+    "\t.globl pseg_1\n" +
     "\tj test_start\n" +
     "\n" +
     "crash_backward:\n" +
@@ -531,6 +533,7 @@ class Prog(memsize: Int, veccfg: Map[String,String], loop : Boolean)
   def data_header() =
   {
     "\t.data\n" +
+    "\t.globl xreg_output_data\n" +
     "\n"
   }
 

@@ -3,9 +3,9 @@ package torture
 import scala.collection.mutable.ArrayBuffer
 import Rand._
 
-class SeqMem(xregs: HWRegPool, mem: Mem, use_amo: Boolean) extends InstSeq
+class SeqMem(xregs: HWRegPool, mem: Mem, use_amo: Boolean, use_priv: Boolean) extends InstSeq
 {
-  println("\n/////////////\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\n")
+  val do_not_use = reg_write_s0(xregs)
   override val seqname = "xmem"
   def seq_load_addrfn(op: Opcode, addrfn: (Int) => Int) = () =>
   {

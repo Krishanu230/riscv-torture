@@ -5,6 +5,7 @@ import Rand._
 
 class InstSeq extends HWRegAllocator
 {
+
   val insts = new ArrayBuffer[Inst]
   var inst_ptr = 0
   val seqname = "Unnamed"
@@ -59,14 +60,14 @@ class HWRegAllocator
     reg
   }
 
-  def reg_read_t6(hwrp: HWRegPool) = {reg_fn(hwrp, filter_read_t6, alloc_read, free_read)}
-  def reg_read_t5(hwrp: HWRegPool) = {reg_fn(hwrp, filter_read_t5, alloc_read, free_read)}
   def reg_read_zero(hwrp: HWRegPool) = { reg_fn(hwrp, filter_read_zero, alloc_read, free_read) }
   def reg_read_any(hwrp: HWRegPool) = { reg_fn(hwrp, filter_read_any, alloc_read, free_read) }
   def reg_read_any_other(hwrp: HWRegPool, other: Reg) = { reg_fn(hwrp, filter_read_any_other(other), alloc_read, free_read) }
   def reg_read_visible(hwrp: HWRegPool) = { reg_fn(hwrp, filter_read_visible, alloc_read, free_read) }
   def reg_read_visible_consec(hwrp: HWRegPool, regs: Int) = { reg_fn(hwrp, filter_read_visible, alloc_read, free_read, regs) }
   def reg_write_ra(hwrp: HWRegPool) = { reg_fn(hwrp, filter_write_ra, alloc_write(false), free_write) }
+  def reg_write_x3(hwrp: HWRegPool) = { reg_fn(hwrp, filter_write_x3, alloc_write(false), free_write) }
+  def reg_write_s0(hwrp: HWRegPool) = { reg_fn(hwrp, filter_write_s0, alloc_write(false), free_write) }
   def reg_write_visible(hwrp: HWRegPool) = { reg_fn(hwrp, filter_write_visible, alloc_write(true), free_write) }
   def reg_write_visible_consec(hwrp: HWRegPool, regs: Int) = { reg_fn(hwrp, filter_write_visible, alloc_write(true), free_write, regs) }
   def reg_write_hidden(hwrp: HWRegPool) = { reg_fn(hwrp, filter_write_hidden, alloc_write(false), free_write) }

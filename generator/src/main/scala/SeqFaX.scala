@@ -5,6 +5,7 @@ import Rand._
 
 class SeqFaX(xregs: HWRegPool, fregs_s: HWRegPool, fregs_d: HWRegPool) extends InstSeq
 {
+  val do_not_use = reg_write_s0(xregs)
   override val seqname = "fax"
   def seq_src1(op: Opcode, dst_pool: HWRegPool, src_pool: HWRegPool) = () =>
   {
@@ -39,7 +40,7 @@ class SeqFaX(xregs: HWRegPool, fregs_s: HWRegPool, fregs_d: HWRegPool) extends I
 
   for (op <- List(FCVT_D_L, FCVT_D_LU, FCVT_D_W, FCVT_D_WU, FMV_D_X))
     candidates += seq_src1(op, fregs_d, xregs)
-  
+
   for (op <- List(FCVT_L_S, FCVT_LU_S, FCVT_W_S, FCVT_WU_S, FMV_X_S))
     candidates += seq_src1(op, xregs, fregs_s)
 
