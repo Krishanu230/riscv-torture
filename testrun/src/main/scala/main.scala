@@ -88,7 +88,7 @@ object TestRunner extends App
 
     // Add the simulators that should be tested
     val simulators = new ArrayBuffer[(String, (String, Boolean, Boolean, Boolean) => String)]
-    simulators += (("kspike",runIsaSim _ ))
+    simulators += (("spike",runIsaSim _ ))
     cSimPath match {
       case Some(p) => simulators += (("csim",runCSim(p) _ ))
       case None =>
@@ -233,7 +233,7 @@ object TestRunner extends App
   def runIsaSim(bin: String, debug: Boolean, output: Boolean, dump: Boolean): String = {
     val debugArgs = if(debug && output) Seq("-d") else Seq()
     val simArgs = if (hwacha) Seq("--extension=hwacha") else Seq()
-    runSim("kspike", simArgs ++ debugArgs, bin+".spike.sig", output, bin+".spike.out", Seq(), bin)
+    runSim("spike", simArgs ++ debugArgs, bin+".spike.sig", output, bin+".spike.out", Seq(), bin)
   }
 
   def runSimulators(bin: String, simulators: Seq[(String, (String, Boolean, Boolean, Boolean) => String)], debug: Boolean, output: Boolean, dumpWaveform: Boolean): Seq[(String, (String, (String, Boolean, Boolean, Boolean) => String), Result)] = {
