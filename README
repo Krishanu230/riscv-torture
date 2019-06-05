@@ -1,4 +1,14 @@
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+***environment to use : "env_touse"
+1. delete the original env folder(or rename it)
+2. rename "env_touse" to "env"
+3. open up sbt and run testrun/run
+
+
+
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  Temp Notes [added by Krishanu Singh]
 Files to check out:
 1.riscv_test.h
