@@ -32,10 +32,17 @@ userstart:                                                              \
 //-----------------------------------------------------------------------
 // Data Section Macro
 //-----------------------------------------------------------------------
+#undef  RVTEST_DATA_BEGIN
+#define RVTEST_DATA_BEGIN                                               \
+        EXTRA_DATA                                                      \
+        .pushsection .tohost,"aw",@progbits;                            \
+        .align 6; .global tohost; tohost: .dword 0;                     \
+        .align 6; .global fromhost; fromhost: .dword 0;                 \
+        .popsection;                                                    \
+        .align 4; .global begin_signature; begin_signature:
 
 #undef RVTEST_DATA_END
-#define RVTEST_DATA_END
-
+#define RVTEST_DATA_END .align 4; .global end_signature; end_signature:
 //-----------------------------------------------------------------------
 // Supervisor mode definitions and macros
 //-----------------------------------------------------------------------
